@@ -1,4 +1,6 @@
-class profile_jenkins {
+class profile_jenkins (
+  $master_hostname = 'puppet'
+) {
   include git
 
   class { 'jenkins':
@@ -22,31 +24,9 @@ class profile_jenkins {
     provider => 'puppet_gem',
   }
 
-  #  transition { 'create my groovy init script':
-  #    resource   => File['/tmp/init.groovy'],
-  #    attributes => {
-  #      ensure  => present,
-  #      content => 'def instance=jenkins.model.Jenkins.instance
-  #      instance.setSlaveAgentPort(40196)
-  #      instance.save()',
-  #    },
-  #    prior_to   => Exec['update jnlp port'],
-  #  }
-
-  #  exec { 'update jnlp port':
-  #    command     => '/usr/bin/java -jar /usr/lib/jenkins/jenkins-cli.jar -s http://127.0.0.1:8080 groovy /tmp/init.groovy',
-  #    subscribe   => Class['jenkins'],
-  #    refreshonly => true,
-  #  }->
-
   file { '/tmp/init.groovy':
     ensure => absent,
   }
-
-  #  jenkins::user { 'puppetpov':
-  #    email    => 'puppetpov@localhost.localdomain',
-  #    password => 'puppetlabs',
-  #  }
 
   firewall { '001 allow jenkins-swarm through the firewall':
     pkttype => 'broadcast',
@@ -115,4 +95,8 @@ class profile_jenkins {
   jenkins::plugin { 'docker-commons': }
   jenkins::plugin { 'icon-shim': }
   jenkins::plugin { 'authentication-tokens': }
+
+  jenkins::job { 'control_repo_validation':
+      config => template("profile_jenkins/control_repo_job.xml.erb"),
+  }
 }
